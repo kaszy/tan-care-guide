@@ -1,0 +1,774 @@
+/* ============================================================
+   Tan'n'go Treatment Guide — Stylesheet
+   Mobile-first, premium beauty aesthetic
+   ============================================================ */
+
+/* ── Design Tokens ──────────────────────────────────────── */
+:root {
+  /* Colour palette */
+  --c-bg:              #FAFAF8;
+  --c-surface:         #FFFFFF;
+  --c-surface-raised:  #FFFFFF;
+  --c-lavender-pale:   #F2EEF9;
+  --c-lavender:        #D9CCF0;
+  --c-purple-light:    #B49ED8;
+  --c-purple:          #8B6FB8;
+  --c-purple-dark:     #6A4E9C;
+  --c-text:            #2D2834;
+  --c-text-muted:      #8C859E;
+  --c-text-faint:      #BAB3CC;
+  --c-border:          #E9E2F5;
+  --c-success:         #7BAE8C;
+
+  /* Typography */
+  --f-serif:  'Playfair Display', Georgia, 'Times New Roman', serif;
+  --f-sans:   'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Radii */
+  --r-sm:  8px;
+  --r-md:  16px;
+  --r-lg:  24px;
+  --r-xl:  32px;
+
+  /* Shadows */
+  --shadow-xs:     0 1px 4px  rgba(107, 78, 156, 0.06);
+  --shadow-sm:     0 2px 10px rgba(107, 78, 156, 0.08);
+  --shadow-md:     0 4px 24px rgba(107, 78, 156, 0.12);
+  --shadow-lg:     0 8px 40px rgba(107, 78, 156, 0.18);
+  --shadow-active: 0 6px 32px rgba(107, 78, 156, 0.22);
+
+  /* Layout */
+  --header-h:   68px;
+  --timeline-h: 60px;
+  --max-w:      860px;
+  --page-px:    24px;
+
+  /* Transitions */
+  --t-fast:   0.15s ease;
+  --t-base:   0.25s ease;
+  --t-slow:   0.4s ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  /* Proximity snapping — user can scroll freely, sections snap softly */
+  /* scroll-snap-type: y proximity; */
+}
+
+body {
+  font-family: var(--f-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  line-height: 1.65;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Suppress animation flash on first load */
+body.js-loading * {
+  animation-play-state: paused !important;
+}
+
+/* ── Site Header ────────────────────────────────────────── */
+.site-header {
+  height: var(--header-h);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.site-header__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 var(--page-px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.brand__name {
+  font-family: var(--f-serif);
+  font-style: italic;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--c-purple-dark);
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.brand__tagline {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--c-text-muted);
+  line-height: 1;
+}
+
+/* Appointment badge */
+.appointment-badge {
+  text-align: right;
+  min-width: 0;
+}
+
+.appointment-badge__label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c-text-muted);
+  margin-bottom: 2px;
+}
+
+.appointment-badge__date {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Sticky Progress Timeline ───────────────────────────── */
+.progress-timeline {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  height: var(--timeline-h);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-timeline__inner {
+  position: relative;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 var(--page-px);
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  /* Hide scrollbar — user navigates via stage nodes */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 0;
+}
+
+.progress-timeline__inner::-webkit-scrollbar {
+  display: none;
+}
+
+/* Connecting track behind the nodes */
+.timeline-track {
+  position: absolute;
+  top: 50%;
+  left: var(--page-px);
+  right: var(--page-px);
+  height: 2px;
+  background: var(--c-border);
+  transform: translateY(-50%);
+  pointer-events: none;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.timeline-track__fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--c-purple-dark) 0%,
+    var(--c-purple-light) 100%
+  );
+  border-radius: 2px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+/* Individual stage node */
+.timeline-node {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  /* Remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timeline-node:focus-visible {
+  outline: 2px solid var(--c-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.timeline-node__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--c-border);
+  background: var(--c-surface);
+  transition:
+    width var(--t-base),
+    height var(--t-base),
+    background var(--t-base),
+    border-color var(--t-base),
+    box-shadow var(--t-base);
+  flex-shrink: 0;
+}
+
+.timeline-node__label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-faint);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 68px;
+  transition: color var(--t-base);
+  line-height: 1.2;
+}
+
+/* Past node */
+.timeline-node.is-past .timeline-node__dot {
+  background: var(--c-purple-light);
+  border-color: var(--c-purple-light);
+}
+
+.timeline-node.is-past .timeline-node__label {
+  color: var(--c-purple-light);
+}
+
+/* Active node */
+.timeline-node.is-active .timeline-node__dot {
+  width: 14px;
+  height: 14px;
+  background: var(--c-purple);
+  border-color: var(--c-purple);
+  box-shadow: 0 0 0 4px rgba(139, 111, 184, 0.18);
+}
+
+.timeline-node.is-active .timeline-node__label {
+  color: var(--c-purple);
+  font-weight: 500;
+}
+
+/* Special: appointment node */
+.timeline-node.is-appointment .timeline-node__dot {
+  width: 16px;
+  height: 16px;
+  background: var(--c-purple-dark);
+  border-color: var(--c-purple-dark);
+}
+
+.timeline-node.is-appointment.is-past .timeline-node__dot,
+.timeline-node.is-appointment.is-active .timeline-node__dot {
+  background: var(--c-purple-dark);
+  border-color: var(--c-purple-dark);
+}
+
+/* ── No-timestamp Notice ────────────────────────────────── */
+.no-timestamp-notice {
+  padding: 48px var(--page-px) 0;
+  display: flex;
+  justify-content: center;
+}
+
+.notice-card {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border);
+  padding: 40px 32px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+}
+
+.notice-card__icon {
+  font-size: 2.2rem;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+
+.notice-card h2 {
+  font-family: var(--f-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: 10px;
+}
+
+.notice-card p {
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+  line-height: 1.7;
+}
+
+/* ── Stages Container ───────────────────────────────────── */
+.stages-container {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 36px var(--page-px) 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Stage Card ─────────────────────────────────────────── */
+.stage-section {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1.5px solid var(--c-border);
+  padding: 36px 32px;
+  box-shadow: var(--shadow-xs);
+  transition:
+    opacity var(--t-slow),
+    border-color var(--t-slow),
+    box-shadow var(--t-slow);
+  /* Offset accounts for sticky timeline height */
+  scroll-snap-align: start;
+  scroll-margin-top: calc(var(--timeline-h) + 12px);
+  animation: stage-enter 0.45s ease both;
+}
+
+/* Past: visually faded */
+.stage-section.is-past {
+  opacity: 0.55;
+}
+
+.stage-section.is-past:hover {
+  opacity: 0.75;
+}
+
+/* Future: subdued */
+.stage-section.is-future {
+  opacity: 0.45;
+}
+
+.stage-section.is-future:hover {
+  opacity: 0.65;
+}
+
+/* Current: prominent */
+.stage-section.is-current {
+  border-color: var(--c-purple);
+  box-shadow: var(--shadow-active);
+  opacity: 1;
+}
+
+/* ── Stage Header ───────────────────────────────────────── */
+.stage-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stage-header__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-sm);
+  background: var(--c-lavender-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.stage-header__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.stage-header__timeline-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-purple);
+  margin-bottom: 4px;
+}
+
+.stage-header__title {
+  font-family: var(--f-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.stage-header__subtitle {
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+  line-height: 1.5;
+}
+
+/* Status badge */
+.stage-header__badge-wrap {
+  flex-shrink: 0;
+}
+
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.stage-badge--current {
+  background: var(--c-purple);
+  color: #fff;
+}
+
+.stage-badge--past {
+  background: var(--c-lavender-pale);
+  color: var(--c-purple-light);
+}
+
+.stage-badge--future {
+  background: var(--c-lavender-pale);
+  color: var(--c-text-faint);
+}
+
+.stage-badge__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Countdown Component ────────────────────────────────── */
+.countdown {
+  background: var(--c-lavender-pale);
+  border-radius: var(--r-md);
+  padding: 22px 20px 18px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.countdown__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-purple);
+  margin-bottom: 14px;
+}
+
+.countdown__display {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.countdown__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 54px;
+}
+
+.countdown__value {
+  font-family: var(--f-serif);
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: var(--c-purple-dark);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  min-width: 2ch;
+  text-align: center;
+}
+
+.countdown__unit-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c-text-muted);
+  margin-top: 5px;
+}
+
+.countdown__sep {
+  font-size: 1.8rem;
+  color: var(--c-lavender);
+  line-height: 1;
+  padding-bottom: 6px;
+  font-family: var(--f-serif);
+  user-select: none;
+}
+
+.countdown__passed {
+  font-family: var(--f-serif);
+  font-style: italic;
+  color: var(--c-text-muted);
+  font-size: 1rem;
+  padding: 4px 0;
+}
+
+/* ── Stage Body ─────────────────────────────────────────── */
+.stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Section sub-label */
+.sub-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-text-muted);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* Checklist */
+.checklist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.checklist__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--c-text);
+  line-height: 1.5;
+}
+
+.checklist__item-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-lavender);
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-base), border-color var(--t-base);
+}
+
+.is-past .checklist__item-check {
+  background: var(--c-purple-light);
+  border-color: var(--c-purple-light);
+}
+
+.checklist__item-check svg {
+  display: none;
+  color: #fff;
+}
+
+.is-past .checklist__item-check svg {
+  display: block;
+}
+
+/* Image placeholder */
+.img-placeholder {
+  aspect-ratio: 16 / 9;
+  background: var(--c-lavender-pale);
+  border-radius: var(--r-md);
+  border: 2px dashed var(--c-lavender);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--c-text-faint);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.img-placeholder__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+/* Notes / tips block */
+.stage-notes {
+  background: var(--c-lavender-pale);
+  border-left: 3px solid var(--c-purple-light);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: 14px 18px;
+}
+
+.stage-notes p {
+  font-size: 0.875rem;
+  color: var(--c-text-muted);
+  line-height: 1.7;
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+@keyframes stage-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Final opacity is overridden by state classes after animation */
+.stage-section.is-past  { animation-name: stage-enter; }
+.stage-section.is-future { animation-name: stage-enter; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid var(--c-border);
+  padding: 20px var(--page-px);
+  background: var(--c-surface);
+}
+
+.site-footer__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.site-footer__brand {
+  font-family: var(--f-serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--c-purple-dark);
+}
+
+.site-footer__copy {
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+}
+
+/* ── Responsive: tablet ─────────────────────────────────── */
+@media (max-width: 680px) {
+  :root {
+    --header-h:   60px;
+    --timeline-h: 54px;
+    --page-px:    16px;
+  }
+
+  .brand__name {
+    font-size: 1.35rem;
+  }
+
+  .stages-container {
+    padding-top: 24px;
+    gap: 14px;
+  }
+
+  .stage-section {
+    padding: 26px 20px;
+  }
+
+  .stage-header {
+    flex-wrap: wrap;
+  }
+
+  /* Move badge above title on narrow screens */
+  .stage-header__badge-wrap {
+    order: -1;
+    width: 100%;
+  }
+
+  .stage-header__icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .stage-header__title {
+    font-size: 1.2rem;
+  }
+
+  .countdown__value {
+    font-size: 1.7rem;
+  }
+
+  .countdown__unit {
+    min-width: 46px;
+  }
+
+  .timeline-node__label {
+    font-size: 0.55rem;
+    max-width: 52px;
+  }
+}
+
+/* ── Responsive: small phone ────────────────────────────── */
+@media (max-width: 400px) {
+  /* Hide labels on very small screens, keep dots only */
+  .timeline-node__label {
+    display: none;
+  }
+
+  .timeline-node__dot {
+    width: 9px;
+    height: 9px;
+  }
+
+  .timeline-node.is-active .timeline-node__dot {
+    width: 13px;
+    height: 13px;
+  }
+
+  .appointment-badge__date {
+    font-size: 0.75rem;
+  }
+}

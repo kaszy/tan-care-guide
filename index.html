@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tan'n'go &middot; Treatment Guide</title>
+  <meta name="description" content="Your personal spray tan treatment guide">
+  <meta name="theme-color" content="#FAFAF8">
+
+  <!-- Fonts: Playfair Display (serif headings) + Inter (sans body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="js-loading">
+
+  <!-- ── Site Header ──────────────────────────────────────── -->
+  <header class="site-header" id="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <span class="brand__name">Tan'n'go</span>
+        <span class="brand__tagline">Treatment Guide</span>
+      </div>
+      <div class="appointment-badge" id="appointment-badge" aria-live="polite">
+        <!-- Populated by script.js -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Sticky Progress Timeline ────────────────────────── -->
+  <nav class="progress-timeline" id="progress-timeline" aria-label="Treatment stages">
+    <div class="progress-timeline__inner" id="progress-timeline-inner">
+      <!-- Populated by script.js -->
+    </div>
+  </nav>
+
+  <!-- ── No-timestamp notice (shown when URL param is missing) -->
+  <div class="no-timestamp-notice" id="no-timestamp-notice" hidden role="status">
+    <div class="notice-card">
+      <div class="notice-card__icon" aria-hidden="true">&#128203;</div>
+      <h2>General Treatment Guide</h2>
+      <p>
+        For your personalised timeline, open the link provided by your salon &mdash;
+        it includes your appointment time.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Stage Cards ──────────────────────────────────────── -->
+  <main class="stages-container" id="stages-container" role="main">
+    <!-- Populated by script.js -->
+  </main>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span class="site-footer__brand">Tan'n'go</span>
+      <span class="site-footer__copy">Your treatment guide</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
