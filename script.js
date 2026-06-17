@@ -29,14 +29,12 @@ const STAGES = [
   {
     id: 'early',
     startsAtHours: -9999,
-    label: '14+ Days',
-    title: 'Title placeholder',
-    subtitle: 'Subtitle placeholder',
+    label: 'Minimum 14 dni',
+    title: 'Zabiegi kosmetyczne',
+    subtitle: 'Ingerencja w naskórek',
     icon: '&#127807;',
     checklist: [
-      'Checklist item placeholder',
-      'Checklist item placeholder',
-      'Checklist item placeholder',
+      'Zabiegi kosmetyczne ingerujące w naskórek wykonaj minimum 14 dni przed zabiegiem opalania.',
     ],
     image: true,
     notes: 'Notes placeholder',
@@ -44,15 +42,13 @@ const STAGES = [
   {
     id: '7days',
     startsAtHours: -168,   // 7 days before appointment
-    label: '7 Days',
-    title: 'Title placeholder',
+    label: '7 dni przed',
+    title: 'Samoopalacze',
     subtitle: 'Subtitle placeholder',
     icon: '&#10024;',
     countdown: { target: 'appointment', label: 'Until your appointment' },
     checklist: [
-      'Checklist item placeholder',
-      'Checklist item placeholder',
-      'Checklist item placeholder',
+      'Nie należy uzywać innych produktów samoopalających na tydzień przed zabiegiem',
     ],
     image: true,
     notes: 'Notes placeholder',
@@ -60,15 +56,14 @@ const STAGES = [
   {
     id: '48hours',
     startsAtHours: -48,    // 48 hours before appointment
-    label: '48 Hours',
-    title: 'Title placeholder',
+    label: '48 godzin przed',
+    title: 'Depilacja',
     subtitle: 'Subtitle placeholder',
     icon: '&#128703;',
     countdown: { target: 'appointment', label: 'Until your appointment' },
     checklist: [
-      'Checklist item placeholder',
-      'Checklist item placeholder',
-      'Checklist item placeholder',
+      'Depilację wykonaj co najmniej 48 godzin przed zabiegiem',
+      'Zminimalizujesz ryzyko, że podczas opalania natryskowego coś pójdzie nie tak lub efekt Cię nie zadowoli',
     ],
     image: false,
     notes: 'Notes placeholder',
@@ -76,14 +71,14 @@ const STAGES = [
   {
     id: '24hours',
     startsAtHours: -24,    // 24 hours before appointment
-    label: '24 Hours',
-    title: 'Title placeholder',
+    label: '24 godziny przed',
+    title: 'Peeling',
     subtitle: 'Subtitle placeholder',
     icon: '&#128167;',
     countdown: { target: 'appointment', label: 'Until your appointment' },
     checklist: [
-      'Checklist item placeholder',
-      'Checklist item placeholder',
+      'Wykonaj peeling 24 godziny przed zabiegiem (np. podczas kąpieli)',
+      'Zwróć szczególną uwagę na dłonie, plecy, łokcie, kolana, kostki i problematyczne suche obszary',
     ],
     image: false,
     notes: 'Notes placeholder',
@@ -91,18 +86,20 @@ const STAGES = [
   {
     id: 'appointmentDay',
     startsAtHours: -6,     // same-day final prep (6 hours before)
-    label: 'Appt. Day',
-    title: 'Title placeholder',
+    label: 'Dzień Wizyty',
+    title: 'Prysznic',
     subtitle: 'Subtitle placeholder',
     icon: '&#128197;',
     countdown: { target: 'appointment', label: 'Until your treatment' },
     checklist: [
-      'Checklist item placeholder',
-      'Checklist item placeholder',
-      'Checklist item placeholder',
+      'Weź prysznic',
+      'Umyj skórę preparatem do higieny intymnej (kwaśne = naturalne dla skóry pH)',
+      'Upewnij się, że Twoja skóra jest czysta i sucha',
+      'Nie nakładaj niczego na skórę - żadnych balsamów, antyperspirantów, perfum, kremów oraz innych kosmetyków',
+      'Zopatrz się w ciemne, luźne i wygodne ubrania'
     ],
     image: false,
-    notes: 'Notes placeholder',
+    notes: 'Takie ubrania pomogą zminimalizować ryzyko zabarwienia tkaniny oraz wytarcia jeszcze nie do końca wchłoniętego materiału ze skóry.',
   },
   {
     id: 'treatment',
@@ -587,7 +584,7 @@ function renderStages(activeStageId, appointmentDate, rinseTimeHours) {
   STAGES.forEach((stage, idx) => {
     const status = getStageStatus(stage.id, activeStageId);
 
-    const badgeLabel = { current: 'Current Step', past: 'Completed', future: 'Upcoming' }[status];
+    const badgeLabel = { current: 'Bieżący krok', past: 'Ukończone', future: 'Nadchodzące' }[status];
     const badgeClass = `stage-badge--${status}`;
 
     // Countdown — only rendered when an appointment date is available
