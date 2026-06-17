@@ -48,7 +48,7 @@ const STAGES = [
     icon: '&#10024;',
     countdown: { target: 'appointment', label: 'Until your appointment' },
     checklist: [
-      'Nie należy uzywać innych produktów samoopalających na tydzień przed zabiegiem',
+      'Nie należy używać innych produktów samoopalających na tydzień przed zabiegiem',
     ],
     image: true,
     notes: 'Notes placeholder',
@@ -186,7 +186,25 @@ const STAGES = [
     image: false,
     notes: 'Notes placeholder',
   },
+  {
+    // Booking CTA — appears 14 days after appointment.
+    // Excluded from the progress timeline (hideFromTimeline) and from stage
+    // detection (isBookingCTA) so it never displaces a real guide step.
+    // The booking link comes from config.bookingUrl in the URL.
+    id: 'nextBooking',
+    startsAtHours: 336,    // 14 days after appointment
+    isBookingCTA: true,
+    hideFromTimeline: true,
+    label: 'Co dalej?',
+    title: 'Title placeholder',
+    subtitle: 'Subtitle placeholder',
+    ctaText: 'Zarezerwuj wizytę',
+  },
 ];
+
+// Stages that appear in the progress timeline.
+// Booking CTAs and any other non-journey cards are excluded.
+const GUIDE_STAGES = STAGES.filter(s => !s.hideFromTimeline);
 
 /* ── Timing Defaults ────────────────────────────────────────
    Used when `rinseTime` is not provided in the URL config.
@@ -206,8 +224,9 @@ const TIMING = {
      ?c=<encodeConfig({ t: '2026-06-20T17:00:00', rinseTime: 3 })>
 
    Current config shape:
-     t          {string}  ISO 8601 appointment timestamp (required)
-     rinseTime  {number}  Hours after appointment for first rinse (optional)
+     t           {string}  ISO 8601 appointment timestamp (required)
+     rinseTime   {number}  Hours after appointment for first rinse (optional)
+     bookingUrl  {string}  Booksy (or other) booking link shown on the CTA card (optional)
 
    The shape is intentionally open — add new keys without breaking
    existing encoded links (unknown keys are silently ignored).
@@ -312,8 +331,10 @@ function getHoursOffset(appointmentDate) {
  * @returns {object}  stage config object
  */
 function detectCurrentStage(hoursOffset, rinseTimeHours) {
-  let active = STAGES[0];
-  for (const stage of STAGES) {
+  // Use only guide stages — booking CTAs must never become the "active" stage
+  // as they are not part of the treatment journey.
+  let active = GUIDE_STAGES[0];
+  for (const stage of GUIDE_STAGES) {
     if (hoursOffset >= getEffectiveStartHours(stage, rinseTimeHours)) {
       active = stage;
     } else {
@@ -478,12 +499,13 @@ function renderAppointmentBadge(appointmentDate) {
  */
 function renderProgressTimeline(activeStageId) {
   const container = document.getElementById('progress-timeline-inner');
-  const activeIdx = STAGES.findIndex(s => s.id === activeStageId);
-  const progressPct = STAGES.length > 1
-    ? (activeIdx / (STAGES.length - 1)) * 100
+  // Timeline only shows guide stages — booking CTAs are excluded
+  const activeIdx = GUIDE_STAGES.findIndex(s => s.id === activeStageId);
+  const progressPct = GUIDE_STAGES.length > 1
+    ? (activeIdx / (GUIDE_STAGES.length - 1)) * 100
     : 0;
 
-  const nodesHTML = STAGES.map((stage, idx) => {
+  const nodesHTML = GUIDE_STAGES.map((stage, idx) => {
     let statusClass = 'is-future';
     if (idx < activeIdx)   statusClass = 'is-past';
     if (idx === activeIdx) statusClass = 'is-active';
@@ -519,8 +541,11 @@ function renderProgressTimeline(activeStageId) {
  * @param {string} visibleStageId  – the stage currently centred in the viewport
  */
 function updateTimelineActive(visibleStageId) {
-  const nodes     = document.querySelectorAll('.timeline-node');
-  const activeIdx = STAGES.findIndex(s => s.id === visibleStageId);
+  const activeIdx = GUIDE_STAGES.findIndex(s => s.id === visibleStageId);
+  // Booking CTAs are not in GUIDE_STAGES — ignore to keep the last guide step highlighted
+  if (activeIdx === -1) return;
+
+  const nodes = document.querySelectorAll('.timeline-node');
 
   nodes.forEach((node, idx) => {
     node.classList.remove('is-past', 'is-active', 'is-future');
@@ -540,8 +565,8 @@ function updateTimelineActive(visibleStageId) {
 
   // Animate the progress fill
   const fill = document.querySelector('.timeline-track__fill');
-  if (fill && STAGES.length > 1) {
-    fill.style.width = `${(activeIdx / (STAGES.length - 1)) * 100}%`;
+  if (fill && GUIDE_STAGES.length > 1) {
+    fill.style.width = `${(activeIdx / (GUIDE_STAGES.length - 1)) * 100}%`;
   }
 
   // Keep the active node visible in the horizontally-scrollable timeline
@@ -573,15 +598,61 @@ function buildChecklistItemHTML(text) {
 
 /**
  * Render all stage cards into the main container.
+ * Booking CTA cards (isBookingCTA) are rendered with a distinct dark template
+ * preceded by an end-of-guide divider.
  *
- * @param {string}    activeStageId
- * @param {Date|null} appointmentDate
- * @param {number}    rinseTimeHours   – resolved rinse time for this session
+ * @param {string}      activeStageId
+ * @param {Date|null}   appointmentDate
+ * @param {number}      rinseTimeHours  – resolved rinse time for this session
+ * @param {string|null} bookingUrl      – Booksy booking link from URL config
  */
-function renderStages(activeStageId, appointmentDate, rinseTimeHours) {
+function renderStages(activeStageId, appointmentDate, rinseTimeHours, bookingUrl) {
   const container = document.getElementById('stages-container');
 
   STAGES.forEach((stage, idx) => {
+    /* ── Booking CTA card ─────────────────────────────────── */
+    if (stage.isBookingCTA) {
+      // End-of-guide divider — visually signals the guide is over
+      const divider = document.createElement('div');
+      divider.className = 'guide-end-divider';
+      divider.setAttribute('aria-hidden', 'true');
+      divider.innerHTML = `
+        <div class="guide-end-divider__line"></div>
+        <span class="guide-end-divider__text">Koniec zaleceń</span>
+        <div class="guide-end-divider__line"></div>
+      `;
+      container.appendChild(divider);
+
+      // Validate booking URL before rendering as a link
+      const hasLink = typeof bookingUrl === 'string' && bookingUrl.startsWith('http');
+      const btnHTML = hasLink
+        ? `<a class="booksy-btn" href="${bookingUrl}" target="_blank" rel="noopener noreferrer">
+             ${stage.ctaText || 'Book now'} &#8599;
+           </a>`
+        : `<span class="booksy-btn booksy-btn--disabled">${stage.ctaText || 'Book now'}</span>`;
+
+      const section = document.createElement('section');
+      section.id        = `stage-${stage.id}`;
+      section.className = 'stage-section stage-section--booking';
+      section.setAttribute('aria-label', stage.label);
+      section.style.animationDelay = `${idx * 55}ms`;
+
+      section.innerHTML = `
+        <div class="booksy-logo" aria-label="Booksy">
+          <div class="booksy-logo__mark" aria-hidden="true">b</div>
+          <span class="booksy-logo__word" aria-hidden="true">booksy</span>
+        </div>
+        <p class="booking-cta__eyebrow">${stage.label}</p>
+        <h2 class="booking-cta__title">${stage.title}</h2>
+        <p class="booking-cta__subtitle">${stage.subtitle}</p>
+        ${btnHTML}
+      `;
+
+      container.appendChild(section);
+      return;
+    }
+
+    /* ── Regular guide stage card ─────────────────────────── */
     const status = getStageStatus(stage.id, activeStageId);
 
     const badgeLabel = { current: 'Bieżący krok', past: 'Ukończone', future: 'Nadchodzące' }[status];
@@ -684,7 +755,8 @@ function scrollToStage(stageId) {
  * highlights whichever card is most prominently visible.
  */
 function initScrollObserver() {
-  const sections = document.querySelectorAll('.stage-section');
+  // Exclude booking CTA cards so scrolling into them doesn't shift the timeline
+  const sections = document.querySelectorAll('.stage-section:not(.stage-section--booking)');
   if (!sections.length) return;
 
   // Track when each section last became visible so we can resolve ties
@@ -764,6 +836,11 @@ function init() {
     ? config.rinseTime
     : TIMING.defaultRinseHours;
 
+  // Booking URL — optional, drives the CTA button at the bottom of the guide
+  const bookingUrl = (typeof config?.bookingUrl === 'string' && config.bookingUrl.startsWith('http'))
+    ? config.bookingUrl
+    : null;
+
   let activeStageId;
 
   if (appointmentDate) {
@@ -779,12 +856,14 @@ function init() {
   // Build the page
   renderAppointmentBadge(appointmentDate);
   renderProgressTimeline(activeStageId);
-  renderStages(activeStageId, appointmentDate, rinseTimeHours);
+  renderStages(activeStageId, appointmentDate, rinseTimeHours, bookingUrl);
 
   // Wire up live countdowns
   startCountdowns();
 
   // Wire up scroll-based timeline highlight
+  // Booking CTA sections are excluded — the timeline stays on the last
+  // guide step when the user scrolls into the booking card.
   initScrollObserver();
 
   // Scroll to the active stage after the first paint.
