@@ -347,7 +347,7 @@
 
     <div class="gen-intro">
       <h1 class="gen-intro__title">Wygeneruj link do wizyty</h1>
-      <p class="gen-intro__sub">Uzupełnij pola ponizej w celu wygererowania spersonalizowanego linku dla klientki.</p>
+      <p class="gen-intro__sub">Uzupełnij pola poniżej w celu wygererowania spersonalizowanego linku dla klientki.</p>
     </div>
 
     <!-- ── Parameters card ──────────────────────────────── -->
@@ -358,15 +358,15 @@
       <div class="field-group">
         <label class="field-label" for="base-url">URL Zaleceń</label>
         <input class="field-input" type="url" id="base-url"
-               value="https://treatment.tanngo.pl"
-               placeholder="https://treatment.tanngo.pl"
+               value="https://zalecenia.tanngo.pl"
+               placeholder="https://zalecenia.tanngo.pl"
                spellcheck="false" autocomplete="off">
         <span class="field-hint">Adres, gdzie znajdują się zalecenia do wizyty</span>
       </div>
 
       <!-- Appointment date & time -->
       <div class="field-group">
-        <label class="field-label" for="appointment-time">Data i godzina wizity</label>
+        <label class="field-label" for="appointment-time">Data i godzina wizyty</label>
         <input class="field-input" type="datetime-local" id="appointment-time">
       </div>
 
@@ -386,6 +386,18 @@
           <button class="preset-btn" type="button" data-hours="12">Overnight &middot; 12h</button>
         </div>
         <span class="field-hint">Rapid: 1&ndash;3h &nbsp;&middot;&nbsp; Standard: 6&ndash;8h &nbsp;&middot;&nbsp; Overnight: 10&ndash;12h</span>
+      </div>
+
+      <!-- Booksy booking URL -->
+      <div class="field-group">
+        <label class="field-label" for="booking-url">
+          Link do rezerwacji
+          <span style="color: var(--c-text-faint); font-weight: 400; text-transform: none; letter-spacing: 0;">&nbsp;&mdash; opcjonalny</span>
+        </label>
+        <input class="field-input" type="url" id="booking-url"
+               placeholder="https://booksy.com/pl-pl/..."
+               spellcheck="false" autocomplete="off">
+        <span class="field-hint">Pojawi się jako przycisk &ldquo;Zarezerwuj wizytę&rdquo; na końcu zaleceń (Booksy lub inny system).</span>
       </div>
     </div>
 
@@ -445,6 +457,7 @@
     const elBaseUrl     = document.getElementById('base-url');
     const elApptTime    = document.getElementById('appointment-time');
     const elRinseTime   = document.getElementById('rinse-time');
+    const elBookingUrl  = document.getElementById('booking-url');
     const elUrlOutput   = document.getElementById('url-output');
     const elUrlDisplay  = document.getElementById('url-display');
     const elUrlAction   = document.getElementById('url-action');
@@ -477,10 +490,14 @@
       // Normalise to full ISO with seconds
       const apptISO = apptRaw.length === 16 ? apptRaw + ':00' : apptRaw;
 
-      // Build config — only include rinseTime when it differs from nothing
+      // Build config — only include optional fields when they have a value
       const config = { t: apptISO };
       if (!isNaN(rinseHours) && rinseHours > 0) {
         config.rinseTime = rinseHours;
+      }
+      const bookingVal = elBookingUrl.value.trim();
+      if (bookingVal.startsWith('http')) {
+        config.bookingUrl = bookingVal;
       }
 
       const encoded = encodeConfig(config);
@@ -570,6 +587,7 @@
     /* ── Input listeners ─────────────────────────────────── */
     elBaseUrl.addEventListener('input', update);
     elApptTime.addEventListener('input', update);
+    elBookingUrl.addEventListener('input', update);
 
     /* ── Click / keyboard on URL output ─────────────────── */
     elUrlOutput.addEventListener('click', copyURL);
