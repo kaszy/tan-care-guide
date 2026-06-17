@@ -335,10 +335,10 @@
     <div class="site-header__inner">
       <div class="brand">
         <span class="brand__name">Tan'n'go</span>
-        <span class="brand__tagline">Generate Appointment Link</span>
+        <span class="brand__tagline">Wygeneruj link do wizyty</span>
       </div>
       <a href="index.html" class="open-btn" style="border: 0; background: transparent; padding: 0; color: var(--c-text-muted); font-size: 0.8rem;">
-        &larr; Guide
+        &larr; Zalecenia
       </a>
     </div>
   </header>
@@ -346,33 +346,33 @@
   <main class="gen-main">
 
     <div class="gen-intro">
-      <h1 class="gen-intro__title">Generate appointment link</h1>
-      <p class="gen-intro__sub">Fill in the details below to create a personalised link for your client.</p>
+      <h1 class="gen-intro__title">Wygeneruj link do wizyty</h1>
+      <p class="gen-intro__sub">Uzupełnij pola ponizej w celu wygererowania spersonalizowanego linku dla klientki.</p>
     </div>
 
     <!-- ── Parameters card ──────────────────────────────── -->
     <div class="gen-card">
-      <p class="gen-card__title">Appointment details</p>
+      <p class="gen-card__title">Szczegóły wizyty</p>
 
       <!-- Base URL -->
       <div class="field-group">
-        <label class="field-label" for="base-url">Guide URL</label>
+        <label class="field-label" for="base-url">URL Zaleceń</label>
         <input class="field-input" type="url" id="base-url"
                value="https://treatment.tanngo.pl"
                placeholder="https://treatment.tanngo.pl"
                spellcheck="false" autocomplete="off">
-        <span class="field-hint">The address where the treatment guide is hosted.</span>
+        <span class="field-hint">Adres, gdzie znajdują się zalecenia do wizyty</span>
       </div>
 
       <!-- Appointment date & time -->
       <div class="field-group">
-        <label class="field-label" for="appointment-time">Appointment date &amp; time</label>
+        <label class="field-label" for="appointment-time">Data i godzina wizity</label>
         <input class="field-input" type="datetime-local" id="appointment-time">
       </div>
 
       <!-- Rinse time -->
       <div class="field-group">
-        <label class="field-label" for="rinse-time">Rinse time (hours after appointment)</label>
+        <label class="field-label" for="rinse-time">Czas spłukania (w godzinach od wizyty)</label>
         <input class="field-input" type="number" id="rinse-time"
                value="8" min="0.5" max="24" step="0.5">
         <div class="presets" id="rinse-presets" role="group" aria-label="Rinse time presets">
@@ -385,17 +385,17 @@
           <button class="preset-btn" type="button" data-hours="10">10h</button>
           <button class="preset-btn" type="button" data-hours="12">Overnight &middot; 12h</button>
         </div>
-        <span class="field-hint">Rapid solutions: 1&ndash;3h &nbsp;&middot;&nbsp; Standard: 6&ndash;8h &nbsp;&middot;&nbsp; Overnight: 10&ndash;12h</span>
+        <span class="field-hint">Rapid: 1&ndash;3h &nbsp;&middot;&nbsp; Standard: 6&ndash;8h &nbsp;&middot;&nbsp; Overnight: 10&ndash;12h</span>
       </div>
     </div>
 
     <!-- ── URL output ────────────────────────────────────── -->
     <div class="url-output is-empty" id="url-output"
          role="button" tabindex="0"
-         aria-label="Generated link — click to copy">
+         aria-label="Generated link — Kliknij aby skopiować">
       <div class="url-output__header">
-        <span class="url-output__title">Generated link</span>
-        <span class="url-output__action" id="url-action">Click to copy</span>
+        <span class="url-output__title">Wygenerowany link</span>
+        <span class="url-output__action" id="url-action">Kliknij aby skopiować</span>
       </div>
       <div class="url-output__url" id="url-display">
         Enter an appointment date &amp; time to generate a link.
@@ -404,13 +404,13 @@
 
     <!-- ── Config preview ────────────────────────────────── -->
     <div class="config-preview" id="config-preview" hidden>
-      <p class="config-preview__label">Encoded parameters</p>
+      <p class="config-preview__label">Zakodowane parametry</p>
       <pre class="config-preview__json" id="config-json"></pre>
     </div>
 
     <!-- ── Open in new tab ───────────────────────────────── -->
     <a class="open-btn" id="open-btn" href="#" target="_blank" rel="noopener" hidden>
-      &#8599;&nbsp; Open guide in new tab
+      &#8599;&nbsp; Otwórz Zalecenia w nowej karcie
     </a>
 
   </main>
@@ -419,12 +419,12 @@
   <footer class="site-footer">
     <div class="site-footer__inner">
       <span class="site-footer__brand">Tan'n'go</span>
-      <span class="site-footer__copy">Link generator</span>
+      <span class="site-footer__copy">Generator linków</span>
     </div>
   </footer>
 
   <!-- ── Copy toast ─────────────────────────────────────── -->
-  <div class="copy-toast" id="copy-toast" aria-live="polite">Copied to clipboard</div>
+  <div class="copy-toast" id="copy-toast" aria-live="polite">Skopiowano do schowka</div>
 
   <script>
     'use strict';
@@ -491,7 +491,7 @@
       elUrlOutput.classList.remove('is-empty', 'is-copied');
 
       // Update action label (reset from "Copied!" if needed)
-      elUrlAction.textContent = 'Click to copy';
+      elUrlAction.textContent = 'Kliknij aby skopiować';
 
       // Update config preview
       elConfigJson.textContent = JSON.stringify(config, null, 2);
@@ -513,12 +513,13 @@
 
     /* ── Copy to clipboard ───────────────────────────────── */
     function copyURL() {
+      console.log("URL copy")
       if (!currentURL) return;
 
       navigator.clipboard.writeText(currentURL).then(() => {
         // Visual feedback on the output card
         elUrlOutput.classList.add('is-copied');
-        elUrlAction.textContent = '&#10003; Copied!';
+        elUrlAction.textContent = '&#10003; Skopiowano!';
 
         // Toast notification
         showToast('Copied to clipboard');
@@ -526,7 +527,7 @@
         // Revert after 2.5 s
         setTimeout(() => {
           elUrlOutput.classList.remove('is-copied');
-          elUrlAction.textContent = 'Click to copy';
+          elUrlAction.textContent = 'Kliknij aby skopiować';
         }, 2500);
       }).catch(() => {
         // Fallback for browsers that deny clipboard access
