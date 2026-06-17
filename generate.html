@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tan'n'go &middot; Generate Link</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Shared design tokens -->
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ── Generator page layout ───────────────────────────── */
+    .gen-main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .gen-intro {
+      text-align: center;
+      padding-bottom: 4px;
+    }
+
+    .gen-intro__title {
+      font-family: var(--f-serif);
+      font-size: 1.7rem;
+      font-weight: 600;
+      color: var(--c-text);
+      margin-bottom: 8px;
+    }
+
+    .gen-intro__sub {
+      font-size: 0.9rem;
+      color: var(--c-text-muted);
+    }
+
+    /* ── Card wrapper ─────────────────────────────────────── */
+    .gen-card {
+      background: var(--c-surface);
+      border-radius: var(--r-lg);
+      border: 1.5px solid var(--c-border);
+      padding: 32px 28px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .gen-card__title {
+      font-family: var(--f-serif);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--c-text);
+      margin-bottom: 22px;
+    }
+
+    /* ── Form fields ──────────────────────────────────────── */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .field-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-text-muted);
+      font-weight: 500;
+    }
+
+    .field-hint {
+      font-size: 0.78rem;
+      color: var(--c-text-faint);
+      margin-top: 2px;
+    }
+
+    .field-input {
+      font-family: var(--f-sans);
+      font-size: 0.95rem;
+      color: var(--c-text);
+      background: var(--c-bg);
+      border: 1.5px solid var(--c-border);
+      border-radius: var(--r-sm);
+      padding: 10px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color var(--t-base), box-shadow var(--t-base);
+      /* Prevent browser default styling on date/time inputs */
+      -webkit-appearance: none;
+    }
+
+    .field-input:focus {
+      border-color: var(--c-purple);
+      box-shadow: 0 0 0 3px rgba(139, 111, 184, 0.12);
+    }
+
+    .field-input::placeholder {
+      color: var(--c-text-faint);
+    }
+
+    /* ── Rinse time presets ───────────────────────────────── */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .preset-btn {
+      font-family: var(--f-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--c-purple);
+      background: var(--c-lavender-pale);
+      border: 1.5px solid var(--c-lavender);
+      border-radius: 100px;
+      padding: 4px 13px;
+      cursor: pointer;
+      transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .preset-btn:hover {
+      background: var(--c-lavender);
+      border-color: var(--c-purple-light);
+    }
+
+    .preset-btn.is-active {
+      background: var(--c-purple);
+      border-color: var(--c-purple);
+      color: #fff;
+    }
+
+    /* ── URL Output ───────────────────────────────────────── */
+    .url-output {
+      background: var(--c-surface);
+      border-radius: var(--r-lg);
+      border: 1.5px solid var(--c-border);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition:
+        border-color var(--t-base),
+        box-shadow var(--t-base),
+        background var(--t-base);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .url-output:hover {
+      border-color: var(--c-purple-light);
+      box-shadow: var(--shadow-md);
+    }
+
+    .url-output:active {
+      transform: scale(0.995);
+    }
+
+    .url-output.is-copied {
+      border-color: var(--c-success);
+      box-shadow: 0 4px 20px rgba(123, 174, 140, 0.18);
+    }
+
+    .url-output.is-empty {
+      cursor: default;
+      opacity: 0.6;
+    }
+
+    .url-output.is-empty:hover {
+      border-color: var(--c-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .url-output__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 8px;
+    }
+
+    .url-output__title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--c-text-muted);
+      font-weight: 500;
+    }
+
+    .url-output__action {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-purple);
+      font-weight: 500;
+      transition: color var(--t-fast);
+      flex-shrink: 0;
+    }
+
+    .url-output.is-copied .url-output__action {
+      color: var(--c-success);
+    }
+
+    .url-output.is-empty .url-output__action {
+      display: none;
+    }
+
+    .url-output__url {
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--c-text);
+      word-break: break-all;
+      line-height: 1.6;
+      transition: color var(--t-fast);
+    }
+
+    .url-output.is-empty .url-output__url {
+      color: var(--c-text-faint);
+      font-family: var(--f-sans);
+      font-size: 0.875rem;
+    }
+
+    .url-output.is-copied .url-output__url {
+      color: var(--c-success);
+    }
+
+    /* ── Config preview ───────────────────────────────────── */
+    .config-preview {
+      background: var(--c-lavender-pale);
+      border-radius: var(--r-md);
+      padding: 18px 20px;
+    }
+
+    .config-preview__label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--c-purple);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .config-preview__json {
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--c-text-muted);
+      line-height: 1.7;
+      white-space: pre;
+    }
+
+    /* ── Open button ──────────────────────────────────────── */
+    .open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--f-sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--c-purple);
+      background: var(--c-lavender-pale);
+      border: 1.5px solid var(--c-lavender);
+      border-radius: var(--r-sm);
+      padding: 9px 18px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background var(--t-fast), border-color var(--t-fast);
+      align-self: flex-start;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .open-btn:hover {
+      background: var(--c-lavender);
+      border-color: var(--c-purple-light);
+    }
+
+    .open-btn[hidden] {
+      display: none;
+    }
+
+    /* ── Copy toast ───────────────────────────────────────── */
+    .copy-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--c-text);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 9px 20px;
+      border-radius: 100px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+      z-index: 500;
+    }
+
+    .copy-toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .gen-main {
+        padding: 28px 16px 60px;
+        gap: 16px;
+      }
+
+      .gen-card {
+        padding: 24px 18px;
+      }
+
+      .url-output {
+        padding: 20px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <span class="brand__name">Tan'n'go</span>
+        <span class="brand__tagline">Generate Appointment Link</span>
+      </div>
+      <a href="index.html" class="open-btn" style="border: 0; background: transparent; padding: 0; color: var(--c-text-muted); font-size: 0.8rem;">
+        &larr; Guide
+      </a>
+    </div>
+  </header>
+
+  <main class="gen-main">
+
+    <div class="gen-intro">
+      <h1 class="gen-intro__title">Generate appointment link</h1>
+      <p class="gen-intro__sub">Fill in the details below to create a personalised link for your client.</p>
+    </div>
+
+    <!-- ── Parameters card ──────────────────────────────── -->
+    <div class="gen-card">
+      <p class="gen-card__title">Appointment details</p>
+
+      <!-- Base URL -->
+      <div class="field-group">
+        <label class="field-label" for="base-url">Guide URL</label>
+        <input class="field-input" type="url" id="base-url"
+               value="https://treatment.tanngo.pl"
+               placeholder="https://treatment.tanngo.pl"
+               spellcheck="false" autocomplete="off">
+        <span class="field-hint">The address where the treatment guide is hosted.</span>
+      </div>
+
+      <!-- Appointment date & time -->
+      <div class="field-group">
+        <label class="field-label" for="appointment-time">Appointment date &amp; time</label>
+        <input class="field-input" type="datetime-local" id="appointment-time">
+      </div>
+
+      <!-- Rinse time -->
+      <div class="field-group">
+        <label class="field-label" for="rinse-time">Rinse time (hours after appointment)</label>
+        <input class="field-input" type="number" id="rinse-time"
+               value="8" min="0.5" max="24" step="0.5">
+        <div class="presets" id="rinse-presets" role="group" aria-label="Rinse time presets">
+          <button class="preset-btn" type="button" data-hours="1">Rapid &middot; 1h</button>
+          <button class="preset-btn" type="button" data-hours="2">Rapid &middot; 2h</button>
+          <button class="preset-btn" type="button" data-hours="3">Rapid &middot; 3h</button>
+          <button class="preset-btn" type="button" data-hours="4">4h</button>
+          <button class="preset-btn" type="button" data-hours="6">6h</button>
+          <button class="preset-btn is-active" type="button" data-hours="8">Standard &middot; 8h</button>
+          <button class="preset-btn" type="button" data-hours="10">10h</button>
+          <button class="preset-btn" type="button" data-hours="12">Overnight &middot; 12h</button>
+        </div>
+        <span class="field-hint">Rapid solutions: 1&ndash;3h &nbsp;&middot;&nbsp; Standard: 6&ndash;8h &nbsp;&middot;&nbsp; Overnight: 10&ndash;12h</span>
+      </div>
+    </div>
+
+    <!-- ── URL output ────────────────────────────────────── -->
+    <div class="url-output is-empty" id="url-output"
+         role="button" tabindex="0"
+         aria-label="Generated link — click to copy">
+      <div class="url-output__header">
+        <span class="url-output__title">Generated link</span>
+        <span class="url-output__action" id="url-action">Click to copy</span>
+      </div>
+      <div class="url-output__url" id="url-display">
+        Enter an appointment date &amp; time to generate a link.
+      </div>
+    </div>
+
+    <!-- ── Config preview ────────────────────────────────── -->
+    <div class="config-preview" id="config-preview" hidden>
+      <p class="config-preview__label">Encoded parameters</p>
+      <pre class="config-preview__json" id="config-json"></pre>
+    </div>
+
+    <!-- ── Open in new tab ───────────────────────────────── -->
+    <a class="open-btn" id="open-btn" href="#" target="_blank" rel="noopener" hidden>
+      &#8599;&nbsp; Open guide in new tab
+    </a>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span class="site-footer__brand">Tan'n'go</span>
+      <span class="site-footer__copy">Link generator</span>
+    </div>
+  </footer>
+
+  <!-- ── Copy toast ─────────────────────────────────────── -->
+  <div class="copy-toast" id="copy-toast" aria-live="polite">Copied to clipboard</div>
+
+  <script>
+    'use strict';
+
+    /* ── Encode config (mirrors script.js) ──────────────── */
+    function encodeConfig(config) {
+      const json   = JSON.stringify(config);
+      const bytes  = new TextEncoder().encode(json);
+      const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
+      return btoa(binary);
+    }
+
+    /* ── State ───────────────────────────────────────────── */
+    let currentURL = '';
+    let toastTimer = null;
+
+    /* ── Elements ────────────────────────────────────────── */
+    const elBaseUrl     = document.getElementById('base-url');
+    const elApptTime    = document.getElementById('appointment-time');
+    const elRinseTime   = document.getElementById('rinse-time');
+    const elUrlOutput   = document.getElementById('url-output');
+    const elUrlDisplay  = document.getElementById('url-display');
+    const elUrlAction   = document.getElementById('url-action');
+    const elConfigJson  = document.getElementById('config-json');
+    const elConfigBlock = document.getElementById('config-preview');
+    const elOpenBtn     = document.getElementById('open-btn');
+    const elToast       = document.getElementById('copy-toast');
+
+    /* ── Pre-fill appointment time with tomorrow at 14:00 ── */
+    (function prefill() {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      d.setHours(14, 0, 0, 0);
+      // datetime-local expects "YYYY-MM-DDTHH:mm"
+      elApptTime.value = d.toISOString().slice(0, 16);
+      update();
+    })();
+
+    /* ── Build and display the URL ───────────────────────── */
+    function update() {
+      const baseUrl    = elBaseUrl.value.trim().replace(/\/$/, '');
+      const apptRaw    = elApptTime.value;   // "2026-06-20T17:00"
+      const rinseHours = parseFloat(elRinseTime.value);
+
+      if (!apptRaw) {
+        setEmpty();
+        return;
+      }
+
+      // Normalise to full ISO with seconds
+      const apptISO = apptRaw.length === 16 ? apptRaw + ':00' : apptRaw;
+
+      // Build config — only include rinseTime when it differs from nothing
+      const config = { t: apptISO };
+      if (!isNaN(rinseHours) && rinseHours > 0) {
+        config.rinseTime = rinseHours;
+      }
+
+      const encoded = encodeConfig(config);
+      currentURL    = `${baseUrl}?c=${encoded}`;
+
+      // Update URL display
+      elUrlDisplay.textContent = currentURL;
+      elUrlOutput.classList.remove('is-empty', 'is-copied');
+
+      // Update action label (reset from "Copied!" if needed)
+      elUrlAction.textContent = 'Click to copy';
+
+      // Update config preview
+      elConfigJson.textContent = JSON.stringify(config, null, 2);
+      elConfigBlock.hidden = false;
+
+      // Update open-in-tab button
+      elOpenBtn.href    = currentURL;
+      elOpenBtn.hidden  = false;
+    }
+
+    function setEmpty() {
+      currentURL = '';
+      elUrlDisplay.textContent = 'Enter an appointment date \u0026 time to generate a link.';
+      elUrlOutput.classList.add('is-empty');
+      elUrlOutput.classList.remove('is-copied');
+      elConfigBlock.hidden = true;
+      elOpenBtn.hidden = true;
+    }
+
+    /* ── Copy to clipboard ───────────────────────────────── */
+    function copyURL() {
+      if (!currentURL) return;
+
+      navigator.clipboard.writeText(currentURL).then(() => {
+        // Visual feedback on the output card
+        elUrlOutput.classList.add('is-copied');
+        elUrlAction.textContent = '&#10003; Copied!';
+
+        // Toast notification
+        showToast('Copied to clipboard');
+
+        // Revert after 2.5 s
+        setTimeout(() => {
+          elUrlOutput.classList.remove('is-copied');
+          elUrlAction.textContent = 'Click to copy';
+        }, 2500);
+      }).catch(() => {
+        // Fallback for browsers that deny clipboard access
+        showToast('Copy failed — please select and copy manually');
+      });
+    }
+
+    function showToast(message) {
+      elToast.textContent = message;
+      elToast.classList.add('is-visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => elToast.classList.remove('is-visible'), 2200);
+    }
+
+    /* ── Preset buttons ──────────────────────────────────── */
+    document.getElementById('rinse-presets').addEventListener('click', e => {
+      const btn = e.target.closest('.preset-btn');
+      if (!btn) return;
+
+      // Update input value
+      elRinseTime.value = btn.dataset.hours;
+
+      // Update active state
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      update();
+    });
+
+    // Deactivate presets when the user types a custom value
+    elRinseTime.addEventListener('input', () => {
+      const val = parseFloat(elRinseTime.value);
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        const matches = parseFloat(btn.dataset.hours) === val;
+        btn.classList.toggle('is-active', matches);
+      });
+      update();
+    });
+
+    /* ── Input listeners ─────────────────────────────────── */
+    elBaseUrl.addEventListener('input', update);
+    elApptTime.addEventListener('input', update);
+
+    /* ── Click / keyboard on URL output ─────────────────── */
+    elUrlOutput.addEventListener('click', copyURL);
+    elUrlOutput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        copyURL();
+      }
+    });
+  </script>
+</body>
+</html>
