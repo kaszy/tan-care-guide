@@ -7,19 +7,23 @@
 
 /* ── Stage Configuration ────────────────────────────────────
    Each stage has:
-     id            – unique identifier
-     startsAtHours – hours relative to appointment when this stage begins
-                     (negative = before, positive = after)
-     label         – short display name used in the timeline nav
-     title         – card heading (placeholder)
-     subtitle      – card subheading (placeholder)
-     icon          – emoji icon for the card
-     isAppointment – marks the appointment node in the timeline
-     countdown     – optional countdown config { target, label }
-                     target: 'appointment' | 'firstRinse'
-     checklist     – array of placeholder strings
-     image         – include image placeholder if truthy
-     notes         – placeholder tip text
+     id                 – unique identifier
+     startsAtHours      – base hours relative to appointment when this stage begins
+                          (negative = before, positive = after)
+     adjustForRinseTime – when true, the effective start is:
+                          startsAtHours + rinseTimeHours
+                          This lets post-rinse stages shift automatically with
+                          different spray tan solutions (rapid 1-3h vs overnight 8h+)
+     label              – short display name used in the timeline nav
+     title              – card heading (placeholder)
+     subtitle           – card subheading (placeholder)
+     icon               – HTML entity / emoji for the card icon
+     isAppointment      – marks the appointment node in the progress timeline
+     countdown          – optional { target, label }
+                          target: 'appointment' | 'firstRinse'
+     checklist          – array of placeholder strings
+     image              – include image placeholder if truthy
+     notes              – placeholder tip text
    ──────────────────────────────────────────────────────── */
 const STAGES = [
   {
@@ -39,7 +43,7 @@ const STAGES = [
   },
   {
     id: '7days',
-    startsAtHours: -168,   // 7 days = 168 hours before
+    startsAtHours: -168,   // 7 days before appointment
     label: '7 Days',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -55,7 +59,7 @@ const STAGES = [
   },
   {
     id: '48hours',
-    startsAtHours: -48,    // 48 hours before
+    startsAtHours: -48,    // 48 hours before appointment
     label: '48 Hours',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -71,7 +75,7 @@ const STAGES = [
   },
   {
     id: '24hours',
-    startsAtHours: -24,    // 24 hours before
+    startsAtHours: -24,    // 24 hours before appointment
     label: '24 Hours',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -102,7 +106,7 @@ const STAGES = [
   },
   {
     id: 'treatment',
-    startsAtHours: 0,      // appointment time
+    startsAtHours: 0,      // at appointment time
     label: 'Treatment',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -117,7 +121,9 @@ const STAGES = [
   },
   {
     id: 'development',
-    startsAtHours: 1,      // 1 hour after (treatment complete, tan developing)
+    startsAtHours: 1,      // 1 hour after treatment completes
+    // No adjustForRinseTime — development begins right after treatment
+    // regardless of how long the client will wait before rinsing.
     label: 'Development',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -133,7 +139,11 @@ const STAGES = [
   },
   {
     id: 'firstRinse',
-    startsAtHours: 8,      // 8 hours after appointment
+    // startsAtHours: 0 + rinseTimeHours  →  stage begins exactly at the rinse time.
+    // Example: rapid solution 1h → effective = 1h after appointment
+    //          overnight solution 8h → effective = 8h after appointment
+    startsAtHours: 0,
+    adjustForRinseTime: true,
     label: 'First Rinse',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -148,7 +158,11 @@ const STAGES = [
   },
   {
     id: 'aftercare',
-    startsAtHours: 24,     // 1 day after
+    // startsAtHours: 16 + rinseTimeHours  →  starts ~16 hours after the rinse.
+    // With default 8h rinse: effective = 24h after appointment (same as before).
+    // With rapid 1h rinse:   effective = 17h after appointment.
+    startsAtHours: 16,
+    adjustForRinseTime: true,
     label: 'Aftercare',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -163,7 +177,7 @@ const STAGES = [
   },
   {
     id: 'fading',
-    startsAtHours: 168,    // 7 days after
+    startsAtHours: 168,    // 7 days after appointment — absolute, no rinse adjustment
     label: 'Fading',
     title: 'Title placeholder',
     subtitle: 'Subtitle placeholder',
@@ -177,14 +191,90 @@ const STAGES = [
   },
 ];
 
-/* ── Timing Configuration ───────────────────────────────────
-   Adjust these offsets (hours relative to appointment) to match
-   the actual treatment protocol without touching the rest of the code.
+/* ── Timing Defaults ────────────────────────────────────────
+   Used when `rinseTime` is not provided in the URL config.
    ──────────────────────────────────────────────────────── */
 const TIMING = {
-  treatmentDurationHours: 1,   // length of the treatment itself
-  firstRinseHours: 8,          // hours after appointment for first rinse
+  treatmentDurationHours: 1,    // length of the treatment itself
+  defaultRinseHours: 8,         // fallback rinse time (hours after appointment)
 };
+
+
+/* ============================================================
+   URL CONFIG  —  encode / decode
+   ============================================================
+   The page receives all parameters as a single base64-encoded
+   JSON object in the `?c=` query parameter:
+
+     ?c=<encodeConfig({ t: '2026-06-20T17:00:00', rinseTime: 3 })>
+
+   Current config shape:
+     t          {string}  ISO 8601 appointment timestamp (required)
+     rinseTime  {number}  Hours after appointment for first rinse (optional)
+
+   The shape is intentionally open — add new keys without breaking
+   existing encoded links (unknown keys are silently ignored).
+   ============================================================ */
+
+/**
+ * Encode an arbitrary config object to a URL-safe base64 string.
+ *
+ * Uses TextEncoder so any Unicode values in future config fields
+ * are handled correctly.
+ *
+ * @param  {object} config
+ * @returns {string}  base64 string, safe to use as a query param value
+ *
+ * @example
+ *   encodeConfig({ t: '2026-06-20T17:00:00', rinseTime: 3 })
+ *   // → "eyJ0IjoiMjAyNi0wNi0yMFQxNzowMDowMCIsInJpbnNlVGltZSI6M30="
+ */
+function encodeConfig(config) {
+  const json   = JSON.stringify(config);
+  const bytes  = new TextEncoder().encode(json);
+  const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
+  return btoa(binary);
+}
+
+/**
+ * Decode a base64 string produced by `encodeConfig` back to a plain object.
+ * Returns `null` on any error (malformed base64, invalid JSON, etc.) so
+ * callers can fall back to a generic / no-timestamp view gracefully.
+ *
+ * @param  {string} encoded
+ * @returns {object|null}
+ *
+ * @example
+ *   decodeConfig('eyJ0IjoiMjAyNi0wNi0yMFQxNzowMDowMCIsInJpbnNlVGltZSI6M30=')
+ *   // → { t: '2026-06-20T17:00:00', rinseTime: 3 }
+ */
+function decodeConfig(encoded) {
+  try {
+    const binary = atob(encoded);
+    const bytes  = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    const json   = new TextDecoder().decode(bytes);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read and decode the page config from the `?c=` URL parameter.
+ * Returns `null` when the parameter is absent or the payload is invalid.
+ *
+ * @returns {object|null}  decoded config object, or null
+ */
+function parsePageConfig() {
+  try {
+    const params  = new URLSearchParams(window.location.search);
+    const encoded = params.get('c');
+    if (!encoded) return null;
+    return decodeConfig(encoded);
+  } catch {
+    return null;
+  }
+}
 
 
 /* ============================================================
@@ -192,29 +282,24 @@ const TIMING = {
    ============================================================ */
 
 /**
- * Parse the appointment timestamp from the URL query parameter `?t=`.
- * Accepts ISO 8601 format: 2026-06-20T17:00:00
- * @returns {Date|null}
+ * Compute the effective start time (in hours from appointment) for a stage,
+ * applying the rinse-time offset when the stage has `adjustForRinseTime: true`.
+ *
+ * @param  {object} stage           – stage config object
+ * @param  {number} rinseTimeHours  – resolved rinse time for this session
+ * @returns {number}
  */
-function parseAppointmentTimestamp() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get('t');
-    if (!raw) return null;
-
-    const date = new Date(raw);
-    if (isNaN(date.getTime())) return null;
-
-    return date;
-  } catch {
-    return null;
-  }
+function getEffectiveStartHours(stage, rinseTimeHours) {
+  return stage.adjustForRinseTime
+    ? stage.startsAtHours + rinseTimeHours
+    : stage.startsAtHours;
 }
 
 /**
  * Return the current time offset in hours from the appointment.
  * Negative = before appointment, positive = after.
- * @param {Date} appointmentDate
+ *
+ * @param  {Date} appointmentDate
  * @returns {number}
  */
 function getHoursOffset(appointmentDate) {
@@ -223,14 +308,16 @@ function getHoursOffset(appointmentDate) {
 
 /**
  * Determine which stage is currently active based on the hours offset.
- * The active stage is the last one whose `startsAtHours` <= hoursOffset.
- * @param {number} hoursOffset
- * @returns {object} stage config object
+ * The active stage is the last one whose effective start <= hoursOffset.
+ *
+ * @param  {number} hoursOffset
+ * @param  {number} rinseTimeHours
+ * @returns {object}  stage config object
  */
-function detectCurrentStage(hoursOffset) {
+function detectCurrentStage(hoursOffset, rinseTimeHours) {
   let active = STAGES[0];
   for (const stage of STAGES) {
-    if (hoursOffset >= stage.startsAtHours) {
+    if (hoursOffset >= getEffectiveStartHours(stage, rinseTimeHours)) {
       active = stage;
     } else {
       break;
@@ -241,21 +328,23 @@ function detectCurrentStage(hoursOffset) {
 
 /**
  * Return the status of a stage relative to the active stage.
- * @param {string} stageId
- * @param {string} activeStageId
+ *
+ * @param  {string} stageId
+ * @param  {string} activeStageId
  * @returns {'past'|'current'|'future'}
  */
 function getStageStatus(stageId, activeStageId) {
   const stageIdx  = STAGES.findIndex(s => s.id === stageId);
   const activeIdx = STAGES.findIndex(s => s.id === activeStageId);
-  if (stageIdx < activeIdx)  return 'past';
+  if (stageIdx < activeIdx)   return 'past';
   if (stageIdx === activeIdx) return 'current';
   return 'future';
 }
 
 /**
  * Format a Date for display in the header badge.
- * @param {Date} date
+ *
+ * @param  {Date} date
  * @returns {string}
  */
 function formatAppointmentDate(date) {
@@ -270,9 +359,10 @@ function formatAppointmentDate(date) {
 
 /**
  * Calculate the time remaining until a target Date.
- * @param {Date} targetDate
+ *
+ * @param  {Date} targetDate
  * @returns {{days:number, hours:number, minutes:number, seconds:number}|null}
- *          null if the target is in the past
+ *          null when the target is in the past
  */
 function getTimeUntil(targetDate) {
   const diffMs = targetDate.getTime() - Date.now();
@@ -289,7 +379,8 @@ function getTimeUntil(targetDate) {
 
 /**
  * Pad a number to at least 2 characters.
- * @param {number} n
+ *
+ * @param  {number} n
  * @returns {string}
  */
 function pad(n) {
@@ -298,13 +389,17 @@ function pad(n) {
 
 /**
  * Resolve the target Date object for a countdown config.
- * @param {{target: string, label: string}} countdownCfg
- * @param {Date} appointmentDate
+ * The 'firstRinse' target uses `rinseTimeHours` from the URL config (or default),
+ * so countdowns automatically reflect the actual solution being used.
+ *
+ * @param  {{target: string, label: string}} countdownCfg
+ * @param  {Date}   appointmentDate
+ * @param  {number} rinseTimeHours
  * @returns {Date}
  */
-function resolveCountdownTarget(countdownCfg, appointmentDate) {
+function resolveCountdownTarget(countdownCfg, appointmentDate, rinseTimeHours) {
   if (countdownCfg.target === 'firstRinse') {
-    return new Date(appointmentDate.getTime() + TIMING.firstRinseHours * 3600 * 1000);
+    return new Date(appointmentDate.getTime() + rinseTimeHours * 3600 * 1000);
   }
   // Default: countdown to appointment
   return appointmentDate;
@@ -312,8 +407,9 @@ function resolveCountdownTarget(countdownCfg, appointmentDate) {
 
 /**
  * Build the inner HTML string for a countdown element.
- * @param {string} label
- * @param {{days,hours,minutes,seconds}|null} timeObj
+ *
+ * @param  {string} label
+ * @param  {{days,hours,minutes,seconds}|null} timeObj
  * @returns {string}
  */
 function buildCountdownHTML(label, timeObj) {
@@ -356,12 +452,14 @@ function buildCountdownHTML(label, timeObj) {
     </div>`;
 }
 
+
 /* ============================================================
    RENDERING
    ============================================================ */
 
 /**
  * Render the appointment date into the header badge.
+ *
  * @param {Date|null} appointmentDate
  */
 function renderAppointmentBadge(appointmentDate) {
@@ -377,7 +475,8 @@ function renderAppointmentBadge(appointmentDate) {
 }
 
 /**
- * Render the full progress timeline into the nav.
+ * Render the full progress timeline into the sticky nav.
+ *
  * @param {string} activeStageId
  */
 function renderProgressTimeline(activeStageId) {
@@ -387,10 +486,9 @@ function renderProgressTimeline(activeStageId) {
     ? (activeIdx / (STAGES.length - 1)) * 100
     : 0;
 
-  // Build track + nodes
   const nodesHTML = STAGES.map((stage, idx) => {
     let statusClass = 'is-future';
-    if (idx < activeIdx)  statusClass = 'is-past';
+    if (idx < activeIdx)   statusClass = 'is-past';
     if (idx === activeIdx) statusClass = 'is-active';
 
     const apptClass = stage.isAppointment ? ' is-appointment' : '';
@@ -420,6 +518,7 @@ function renderProgressTimeline(activeStageId) {
 
 /**
  * Update only the active state of timeline nodes (called by scroll observer).
+ *
  * @param {string} visibleStageId  – the stage currently centred in the viewport
  */
 function updateTimelineActive(visibleStageId) {
@@ -430,7 +529,10 @@ function updateTimelineActive(visibleStageId) {
     node.classList.remove('is-past', 'is-active', 'is-future');
     node.setAttribute('aria-current', 'false');
 
-    if (idx < activeIdx)  { node.classList.add('is-past');   return; }
+    if (idx < activeIdx) {
+      node.classList.add('is-past');
+      return;
+    }
     if (idx === activeIdx) {
       node.classList.add('is-active');
       node.setAttribute('aria-current', 'step');
@@ -439,13 +541,13 @@ function updateTimelineActive(visibleStageId) {
     node.classList.add('is-future');
   });
 
-  // Animate the track fill
+  // Animate the progress fill
   const fill = document.querySelector('.timeline-track__fill');
   if (fill && STAGES.length > 1) {
     fill.style.width = `${(activeIdx / (STAGES.length - 1)) * 100}%`;
   }
 
-  // Scroll the timeline so the active node is centred
+  // Keep the active node visible in the horizontally-scrollable timeline
   const activeNode = document.querySelector(`.timeline-node[data-stage-id="${visibleStageId}"]`);
   if (activeNode) {
     activeNode.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -453,12 +555,12 @@ function updateTimelineActive(visibleStageId) {
 }
 
 /**
- * Build a checklist item element.
- * @param {string} text
- * @returns {string} HTML string
+ * Build a single checklist item as an HTML string.
+ *
+ * @param  {string} text
+ * @returns {string}
  */
 function buildChecklistItemHTML(text) {
-  // SVG checkmark (shown when stage is past via CSS)
   const checkSVG = `<svg width="9" height="7" viewBox="0 0 9 7" fill="none" aria-hidden="true">
     <path d="M1 3.5L3.5 6L8 1" stroke="currentColor" stroke-width="1.5"
           stroke-linecap="round" stroke-linejoin="round"/>
@@ -474,23 +576,24 @@ function buildChecklistItemHTML(text) {
 
 /**
  * Render all stage cards into the main container.
+ *
  * @param {string}    activeStageId
  * @param {Date|null} appointmentDate
+ * @param {number}    rinseTimeHours   – resolved rinse time for this session
  */
-function renderStages(activeStageId, appointmentDate) {
+function renderStages(activeStageId, appointmentDate, rinseTimeHours) {
   const container = document.getElementById('stages-container');
 
   STAGES.forEach((stage, idx) => {
     const status = getStageStatus(stage.id, activeStageId);
 
-    // Status badge
     const badgeLabel = { current: 'Current Step', past: 'Completed', future: 'Upcoming' }[status];
     const badgeClass = `stage-badge--${status}`;
 
-    // Countdown HTML (only when timestamp is available)
+    // Countdown — only rendered when an appointment date is available
     let countdownHTML = '';
     if (stage.countdown && appointmentDate) {
-      const targetDate = resolveCountdownTarget(stage.countdown, appointmentDate);
+      const targetDate = resolveCountdownTarget(stage.countdown, appointmentDate, rinseTimeHours);
       const timeObj    = getTimeUntil(targetDate);
       countdownHTML = `
         <div class="countdown"
@@ -501,7 +604,6 @@ function renderStages(activeStageId, appointmentDate) {
       `;
     }
 
-    // Checklist HTML
     const checklistHTML = stage.checklist && stage.checklist.length
       ? `<div>
           <p class="sub-label">Checklist</p>
@@ -511,7 +613,6 @@ function renderStages(activeStageId, appointmentDate) {
         </div>`
       : '';
 
-    // Image placeholder HTML
     const imageHTML = stage.image
       ? `<div class="img-placeholder">
           <span class="img-placeholder__icon" aria-hidden="true">&#128444;</span>
@@ -519,7 +620,6 @@ function renderStages(activeStageId, appointmentDate) {
         </div>`
       : '';
 
-    // Notes HTML
     const notesHTML = stage.notes
       ? `<div class="stage-notes">
           <p class="sub-label">Tip</p>
@@ -527,12 +627,10 @@ function renderStages(activeStageId, appointmentDate) {
         </div>`
       : '';
 
-    // Build full section
     const section = document.createElement('section');
     section.id        = `stage-${stage.id}`;
     section.className = `stage-section is-${status}`;
     section.setAttribute('aria-label', stage.label);
-    // Stagger entrance animation
     section.style.animationDelay = `${idx * 55}ms`;
 
     section.innerHTML = `
@@ -571,6 +669,7 @@ function renderStages(activeStageId, appointmentDate) {
 
 /**
  * Smoothly scroll to a stage card by id.
+ *
  * @param {string} stageId
  */
 function scrollToStage(stageId) {
@@ -584,15 +683,14 @@ function scrollToStage(stageId) {
  * Set up an IntersectionObserver that updates the timeline active node
  * as the user scrolls through stage cards.
  *
- * The observer uses a narrow root margin (centre band of the viewport)
- * so the timeline reflects whichever card is most prominently visible.
+ * The observer watches only the middle band of the viewport so the timeline
+ * highlights whichever card is most prominently visible.
  */
 function initScrollObserver() {
   const sections = document.querySelectorAll('.stage-section');
   if (!sections.length) return;
 
-  // Track the latest intersection time per section so we can pick the
-  // most-recently-intersected one when multiple fire simultaneously.
+  // Track when each section last became visible so we can resolve ties
   const intersecting = new Map();
 
   const observer = new IntersectionObserver(
@@ -608,20 +706,16 @@ function initScrollObserver() {
 
       if (intersecting.size === 0) return;
 
-      // Choose the stage that became visible most recently
+      // Prefer the section that most recently entered the observation zone
       let latestId   = null;
       let latestTime = -Infinity;
       intersecting.forEach((time, id) => {
-        if (time > latestTime) {
-          latestTime = time;
-          latestId   = id;
-        }
+        if (time > latestTime) { latestTime = time; latestId = id; }
       });
 
       if (latestId) updateTimelineActive(latestId);
     },
     {
-      // Only observe the middle third of the viewport
       rootMargin: '-30% 0px -30% 0px',
       threshold:  0,
     }
@@ -636,22 +730,19 @@ function initScrollObserver() {
    ============================================================ */
 
 /**
- * Find all countdown elements and start a 1-second interval for each.
- * Each countdown reads its target from `data-countdown-target` (ISO string)
- * and its label from `data-countdown-label`.
+ * Start a 1-second interval for every countdown element on the page.
+ * The target date is stored in `data-countdown-target` (ISO string) so
+ * countdowns are fully self-contained after the initial render.
  */
 function startCountdowns() {
-  const countdownEls = document.querySelectorAll('.countdown[data-countdown-target]');
-
-  countdownEls.forEach(el => {
+  document.querySelectorAll('.countdown[data-countdown-target]').forEach(el => {
     const targetDate = new Date(el.dataset.countdownTarget);
     const label      = el.dataset.countdownLabel;
 
-    function tick() {
+    const tick = () => {
       el.innerHTML = buildCountdownHTML(label, getTimeUntil(targetDate));
-    }
+    };
 
-    // Initial render, then every second
     tick();
     setInterval(tick, 1000);
   });
@@ -663,15 +754,26 @@ function startCountdowns() {
    ============================================================ */
 
 function init() {
-  const appointmentDate = parseAppointmentTimestamp();
+  // Decode all parameters from the single ?c= query param
+  const config = parsePageConfig();
+
+  // Extract appointment date (required) and rinse time (optional)
+  const appointmentDate = config?.t ? (() => {
+    const d = new Date(config.t);
+    return isNaN(d.getTime()) ? null : d;
+  })() : null;
+
+  const rinseTimeHours = (typeof config?.rinseTime === 'number' && config.rinseTime > 0)
+    ? config.rinseTime
+    : TIMING.defaultRinseHours;
 
   let activeStageId;
 
   if (appointmentDate) {
     const hoursOffset = getHoursOffset(appointmentDate);
-    activeStageId = detectCurrentStage(hoursOffset).id;
+    activeStageId = detectCurrentStage(hoursOffset, rinseTimeHours).id;
   } else {
-    // No (or invalid) timestamp — show notice, default to first stage
+    // No (or invalid) config — show the generic notice, default to first stage
     const notice = document.getElementById('no-timestamp-notice');
     if (notice) notice.hidden = false;
     activeStageId = STAGES[0].id;
@@ -680,22 +782,20 @@ function init() {
   // Build the page
   renderAppointmentBadge(appointmentDate);
   renderProgressTimeline(activeStageId);
-  renderStages(activeStageId, appointmentDate);
+  renderStages(activeStageId, appointmentDate, rinseTimeHours);
 
   // Wire up live countdowns
   startCountdowns();
 
-  // Wire up scroll-based timeline updates
+  // Wire up scroll-based timeline highlight
   initScrollObserver();
 
   // Scroll to the active stage after the first paint.
-  // rAF ensures the layout is committed before we attempt to scroll.
+  // rAF commits the layout; the timeout lets CSS transitions settle.
   requestAnimationFrame(() => {
-    // Small delay lets CSS transitions settle, preventing a jarring jump
     setTimeout(() => scrollToStage(activeStageId), 350);
   });
 
-  // Lift loading class so animations begin
   document.body.classList.remove('js-loading');
 }
 
