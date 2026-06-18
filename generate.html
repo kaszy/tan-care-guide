@@ -481,6 +481,7 @@
       const baseUrl    = elBaseUrl.value.trim().replace(/\/$/, '');
       const apptRaw    = elApptTime.value;   // "2026-06-20T17:00"
       const rinseHours = parseFloat(elRinseTime.value);
+      const uuid = crypto.randomUUID();
 
       if (!apptRaw) {
         setEmpty();
@@ -491,7 +492,7 @@
       const apptISO = apptRaw.length === 16 ? apptRaw + ':00' : apptRaw;
 
       // Build config — only include optional fields when they have a value
-      const config = { t: apptISO };
+      const config = { t: apptISO, visitId: uuid };
       if (!isNaN(rinseHours) && rinseHours > 0) {
         config.rinseTime = rinseHours;
       }

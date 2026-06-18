@@ -214,6 +214,15 @@ const TIMING = {
   defaultRinseHours: 8,         // fallback rinse time (hours after appointment)
 };
 
+/* ── Tracking Configuration ─────────────────────────────────
+   Set edgeFnUrl to your deployed track-visit function URL.
+   Find it: Supabase Dashboard → Edge Functions → track-visit → Details
+   Leave as '' to disable tracking (e.g. local development).
+   ──────────────────────────────────────────────────────── */
+const TRACKING = {
+  edgeFnUrl: 'https://pmyyqjqadwkxpnuzmarm.supabase.co/functions/v1/track-visit',
+};
+
 
 /* ============================================================
    URL CONFIG  —  encode / decode
@@ -290,6 +299,41 @@ function parsePageConfig() {
   } catch {
     return null;
   }
+}
+
+
+/* ============================================================
+   TRACKING
+   ============================================================ */
+
+/**
+ * Fire-and-forget: POST a tracking event to the edge function.
+ *
+ * The full URL config is forwarded as the request body so the edge function
+ * can upsert the appointment row and insert the event in one call.
+ * `config.visitId` is the appointment's UUID primary key in Supabase —
+ * it lives inside the encoded URL payload, not as a visible query param.
+ *
+ * Silently skipped when:
+ *   - TRACKING.edgeFnUrl is not configured
+ *   - config is null (generic guide opened without a personalised link)
+ *   - config.visitId is absent (link generated before visitId was added)
+ *
+ * Errors are caught and warned; they must never break the guide.
+ *
+ * @param {object|null} config    – decoded URL config
+ * @param {string}      eventType – 'guide_opened' | 'rebook_clicked' | 'map_clicked'
+ */
+function trackEvent(config, eventType) {
+  if (!TRACKING.edgeFnUrl || !config?.visitId) return;
+
+  fetch(TRACKING.edgeFnUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...config, event_type: eventType }),
+  }).catch(err => {
+    console.warn('[tan\'n\'go] Event tracking failed:', err);
+  });
 }
 
 
@@ -825,6 +869,10 @@ function startCountdowns() {
 function init() {
   // Decode all parameters from the single ?c= query param
   const config = parsePageConfig();
+
+  // Fire guide_opened event — fire-and-forget, never blocks rendering.
+  // visitId (inside the encoded payload) is the appointment's PK in Supabase.
+  trackEvent(config, 'guide_opened');
 
   // Extract appointment date (required) and rinse time (optional)
   const appointmentDate = config?.t ? (() => {
