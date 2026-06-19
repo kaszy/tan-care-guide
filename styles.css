@@ -829,6 +829,23 @@ body.js-loading * {
   color: var(--c-text-muted);
 }
 
+.site-footer__nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.site-footer__link {
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+
+.site-footer__link:hover {
+  color: var(--c-purple);
+}
+
 /* ── Responsive: tablet ─────────────────────────────────── */
 @media (max-width: 680px) {
   :root {

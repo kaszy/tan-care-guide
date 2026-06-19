@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tan'n'go &middot; Polityka prywatności</title>
+  <meta name="robots" content="noindex">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ── Prose page layout ───────────────────────────────────
+       Reuses CSS variables and base elements from styles.css.
+       Only defines the content-area structure not present elsewhere.
+       ──────────────────────────────────────────────────────── */
+
+    .prose-page {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 48px var(--page-px) 80px;
+    }
+
+    .prose-page__eyebrow {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--c-purple);
+      margin-bottom: 10px;
+    }
+
+    .prose-page__title {
+      font-family: var(--f-serif);
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--c-text);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .prose-page__lead {
+      font-size: 1rem;
+      color: var(--c-text-muted);
+      line-height: 1.7;
+      max-width: 600px;
+      margin-bottom: 48px;
+      padding-bottom: 48px;
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    /* Individual section */
+    .prose-section {
+      margin-bottom: 40px;
+    }
+
+    .prose-section__title {
+      font-family: var(--f-serif);
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--c-text);
+      margin-bottom: 12px;
+    }
+
+    .prose-section p,
+    .prose-section li {
+      font-size: 0.9rem;
+      color: var(--c-text-muted);
+      line-height: 1.75;
+    }
+
+    .prose-section ul,
+    .prose-section ol {
+      padding-left: 0;
+      list-style: none;
+      /* display: flex;
+      flex-direction: column; */
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    /* .prose-section li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    } */
+
+    /* .prose-section li::before {
+      content: '';
+      display: block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--c-purple-light);
+      flex-shrink: 0;
+      margin-top: 8px;
+    } */
+
+    /* "Not collected" highlight block — reuses stage-notes colours */
+    .prose-not-collected {
+      background: var(--c-lavender-pale);
+      border-left: 3px solid var(--c-purple-light);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      padding: 18px 20px;
+      margin-top: 14px;
+    }
+
+    .prose-not-collected__label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--c-purple);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .prose-not-collected ul {
+      margin-top: 0;
+    }
+
+    @media (max-width: 680px) {
+      .prose-page {
+        padding-top: 32px;
+      }
+
+      .prose-page__title {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="brand">
+        <span class="brand__name">Tan'n'go</span>
+        <span class="brand__tagline">Polityka prywatności</span>
+      </div>
+      <a href="index.html" class="site-footer__link">&larr; Zalecenia</a>
+    </div>
+  </header>
+
+  <!-- ── Content ────────────────────────────────────────────── -->
+  <main class="prose-page">
+
+    <p class="prose-page__eyebrow">Przejrzystość</p>
+    <h1 class="prose-page__title">Polityka prywatności</h1>
+    <p class="prose-page__lead">
+      Poniżej wyjaśniamy uczciwie, jakie dane zbieramy podczas korzystania
+      z&nbsp;zaleceń do zabiegu, dlaczego to robimy i&nbsp;czego
+      <strong>nie</strong>&nbsp;zbieramy.
+    </p>
+
+    <!-- ── Co zbieramy ──────────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Co zbieramy</h2>
+      <p>
+        Gdy salon generuje dla Ciebie link, w&nbsp;adresie URL zakodowane są
+        wyłącznie dane dotyczące wizyty. Podczas otwierania zaleceń te
+        informacje są anonimowo przesyłane do naszej bazy danych:
+      </p>
+      <ul>
+        <li>
+          <strong>Identyfikator wizyty</strong> &mdash; losowy, unikalny kod UUID
+          przypisany do Twojego linku. Nie jest powiązany z&nbsp;Twoim imieniem,
+          numerem telefonu ani adresem e-mail.
+        </li>
+        <li>
+          <strong>Data i&nbsp;godzina zabiegu</strong> &mdash; termin Twojej
+          wizyty przekazany przez salon przy generowaniu linku.
+        </li>
+        <li>
+          <strong>Czas spłukania (opcjonalnie)</strong> &mdash; liczba godzin do
+          pierwszego prysznica, dostosowana do stosowanego produktu.
+        </li>
+        <li>
+          <strong>Zdarzenia</strong> &mdash; proste akcje: otwarcie zaleceń
+          (<em>guide_opened</em>), kliknięcie przycisku rezerwacji kolejnej wizyty
+          (<em>rebook_clicked</em>), kliknięcie lokalizacji salonu
+          (<em>map_clicked</em>). Każde zdarzenie zapisuje jedynie typ akcji
+          i&nbsp;czas jej wystąpienia.
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Czego NIE zbieramy ────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Czego nie zbieramy</h2>
+      <p>
+        Zalecenia działają w&nbsp;całości jako statyczna strona internetowa.
+        Nie używamy ciasteczek, nie śledzimy Cię między sesjami i nie
+        zbieramy żadnych danych osobowych.
+      </p>
+
+      <div class="prose-not-collected">
+        <p class="prose-not-collected__label">Nigdy nie zbieramy</p>
+        <ul>
+          <li>Imienia, nazwiska, adresu e-mail ani numeru telefonu</li>
+          <li>Adresu IP ani przybliżonej lokalizacji</li>
+          <li>Informacji o&nbsp;urządzeniu, systemie operacyjnym ani przeglądarce</li>
+          <li>Ciasteczek ani żadnych innych identyfikatorów śledzących</li>
+          <li>Historii przeglądania ani zachowania na innych stronach</li>
+          <li>Danych finansowych ani płatniczych</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ── Dlaczego ──────────────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Po co nam te dane</h2>
+      <p>
+        Zebrane dane służą wyłącznie do poprawy jakości zaleceń i&nbsp;obsługi
+        klientek salonu:
+      </p>
+      <ul>
+        <li>
+          Sprawdzamy, czy klientki otwierają zalecenia przed zabiegiem, co pozwala
+          nam oceniać skuteczność komunikacji.
+        </li>
+        <li>
+          Analizujemy, które funkcje (np. przycisk rezerwacji) są faktycznie
+          używane, aby rozwijać aplikację w&nbsp;oparciu o&nbsp;realne zachowania.
+        </li>
+        <li>
+          Wykrywamy ewentualne błędy techniczne (np. linki, które nie otwierają
+          się poprawnie).
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Kto ma dostęp ─────────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Kto ma dostęp do danych</h2>
+      <p>
+        Dane są przechowywane w&nbsp;bazie danych Supabase
+        (infrastruktura w&nbsp;UE) i&nbsp;dostępne wyłącznie dla salonu
+        Tan'n'go. Nie sprzedajemy, nie udostępniamy ani nie przekazujemy
+        tych danych żadnym podmiotom trzecim w&nbsp;celach marketingowych.
+      </p>
+      <p style="margin-top: 10px;">
+        Dane są dostępne jedynie przez bezpieczny interfejs z&nbsp;użyciem
+        klucza serwisowego &mdash; żaden z&nbsp;nich nie jest publicznie
+        dostępny przez stronę zaleceń.
+      </p>
+    </section>
+
+    <!-- ── Jak długo ─────────────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Jak długo przechowujemy dane</h2>
+      <p>
+        Dane dotyczące wizyty i&nbsp;zdarzeń przechowujemy przez okres
+        niezbędny do realizacji powyższych celów, nie dłużej niż 24&nbsp;miesiące
+        od daty zabiegu. Po tym czasie są usuwane.
+      </p>
+    </section>
+
+    <!-- ── Kontakt ───────────────────────────────────────────── -->
+    <section class="prose-section">
+      <h2 class="prose-section__title">Pytania i kontakt</h2>
+      <p>
+        Jeśli masz pytania dotyczące przetwarzania danych lub chcesz, aby Twoje
+        dane zostały usunięte wcześniej, skontaktuj się bezpośrednio z&nbsp;salonem
+        Tan'n'go.
+      </p>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span class="site-footer__brand">Tan'n'go</span>
+      <nav class="site-footer__nav" aria-label="Informacje">
+        <a class="site-footer__link" href="privacy.html">Polityka prywatności</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>
